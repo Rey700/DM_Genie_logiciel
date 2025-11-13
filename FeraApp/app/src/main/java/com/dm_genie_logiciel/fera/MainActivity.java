@@ -8,6 +8,10 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.*;
+import com.dm_genie_logiciel.fera.database.AppDatabase;
+import com.dm_genie_logiciel.fera.database.Utilisateurs;
+import com.dm_genie_logiciel.fera.database.UtilisateursDao;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -25,6 +29,18 @@ public class MainActivity extends AppCompatActivity {
         String pseudo = prefs.getString("pseudo", "Utilisateur");
         String role = prefs.getString("role", "Visiteur");
 
+        AppDatabase db = AppDatabase.getDatabase(getApplicationContext());
+        UtilisateursDao utilisateursDao = db.utilisateursDao();
+
+        new Thread(() -> {
+            utilisateursDao.insert(new Utilisateurs("Alice", "alice@email.com"));
+            utilisateursDao.insert(new Utilisateurs("Bob", "bob@email.com"));
+
+            List<Utilisateurs> utilisateursList = utilisateursDao.getAllUtilisateurs();
+            for (Utilisateurs u : utilisateursList) {
+                System.out.println(u.id + ": " + u.nom + " - " + u.email);
+            }
+        }).start();
 
         btnLogout.setOnClickListener(new View.OnClickListener() {
             @Override

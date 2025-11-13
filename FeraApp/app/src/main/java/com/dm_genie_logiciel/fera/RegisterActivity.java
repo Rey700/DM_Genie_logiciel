@@ -34,7 +34,7 @@ public class RegisterActivity extends AppCompatActivity {
 
                 Utilisateur user = UserManager.connecter(pseudo, motDePasse);
 
-                if (user != null) {
+                if (user == null) {
                     SharedPreferences prefs = getSharedPreferences("UserPrefs", MODE_PRIVATE);
                     SharedPreferences.Editor editor = prefs.edit();
                     editor.putString("pseudo", user.getPseudo());
@@ -51,4 +51,3 @@ public class RegisterActivity extends AppCompatActivity {
         });
     }
 }
-
