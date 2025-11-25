@@ -2,11 +2,11 @@ package com.dm_genie_logiciel.fera;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.annotation.SuppressLint;
+import android.content.ClipData;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.*;
 import com.dm_genie_logiciel.fera.database.AppDatabase;
 import com.dm_genie_logiciel.fera.database.Utilisateurs;
@@ -15,45 +15,98 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    Button btnLogout;
+    Button btnLogout, buttonUploadImage;
+    TextView textUserInfo;
+    ImageView imagePreview;
+    LinearLayout galleryContainer;
 
-    @SuppressLint("MissingInflatedId")
+    private static final int PICK_IMAGE = 100;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         btnLogout = findViewById(R.id.btnLogout);
+        buttonUploadImage = findViewById(R.id.buttonUploadImage);
+        imagePreview = findViewById(R.id.imagePreview);
+        textUserInfo = findViewById(R.id.textUserInfo);
+        galleryContainer = findViewById(R.id.galleryContainer);
 
         SharedPreferences prefs = getSharedPreferences("UserPrefs", MODE_PRIVATE);
         String pseudo = prefs.getString("pseudo", "Utilisateur");
         String role = prefs.getString("role", "Visiteur");
 
+        textUserInfo.setText("Connecté en tant que : " + pseudo + " (" + role + ")");
+
+        buttonUploadImage.setOnClickListener(v -> {
+            Intent gallery = new Intent(Intent.ACTION_PICK);
+            gallery.setType("image/*");
+            gallery.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+            startActivityForResult(gallery, PICK_IMAGE);
+        });
+
+
+        btnLogout.setOnClickListener(v -> {
+            SharedPreferences prefsLogout = getSharedPreferences("UserPrefs", MODE_PRIVATE);
+            prefsLogout.edit().clear().apply();
+            startActivity(new Intent(MainActivity.this, StartActivity.class));
+            finish();
+        });
+
         AppDatabase db = AppDatabase.getDatabase(getApplicationContext());
         UtilisateursDao utilisateursDao = db.utilisateursDao();
 
         new Thread(() -> {
-            utilisateursDao.insert(new Utilisateurs("Alice", "alice@email.com"));
-            utilisateursDao.insert(new Utilisateurs("Bob", "bob@email.com"));
+            if (utilisateursDao.getAllUtilisateurs().isEmpty()) {
+                utilisateursDao.insert(new Utilisateurs("Alice", "alice@email.com"));
+                utilisateursDao.insert(new Utilisateurs("Bob", "bob@email.com"));
+            }
+
 
             List<Utilisateurs> utilisateursList = utilisateursDao.getAllUtilisateurs();
             for (Utilisateurs u : utilisateursList) {
                 System.out.println(u.id + ": " + u.nom + " - " + u.email);
             }
         }).start();
+    }
 
-        btnLogout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                SharedPreferences prefs = getSharedPreferences("UserPrefs", MODE_PRIVATE);
-                prefs.edit().clear().apply();
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
 
+        if (requestCode == PICK_IMAGE && resultCode == RESULT_OK && data != null) {
 
-                Intent intent = new Intent(MainActivity.this, StartActivity.class);
-                startActivity(intent);
-                finish();
+            if (data.getClipData() != null) {
+                ClipData clipData = data.getClipData();
+                int count = clipData.getItemCount();
+
+                for (int i = 0; i < count; i++) {
+                    Uri imageUri = clipData.getItemAt(i).getUri();
+                    ajouterImageAlaVue(imageUri);
+                }
+
+            } else if (data.getData() != null) {
+                Uri imageUri = data.getData();
+                ajouterImageAlaVue(imageUri);
             }
-        });
+        }
+    }
+
+    private void ajouterImageAlaVue(Uri imageUri) {
+        ImageView imageView = new ImageView(this);
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                400
+        );
+        params.setMargins(0, 20, 0, 20);
+        imageView.setLayoutParams(params);
+
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        imageView.setImageURI(imageUri);
+
+        galleryContainer.addView(imageView);
     }
 
 
