@@ -59,8 +59,10 @@ public class MainActivity extends AppCompatActivity {
 
         new Thread(() -> {
             if (utilisateursDao.getAllUtilisateurs().isEmpty()) {
-                utilisateursDao.insert(new Utilisateurs("Alice", "alice@email.com"));
-                utilisateursDao.insert(new Utilisateurs("Bob", "bob@email.com"));
+                utilisateursDao.insert(new Utilisateurs("Dupont","Alice","alice@email.com",
+                        "alice123","passwordAlice","UTILISATEUR"));
+                utilisateursDao.insert(new Utilisateurs("Martin","Bob","bob@email.com",
+                        "bobby","passwordBob","UTILISATEUR"));
             }
 
 
