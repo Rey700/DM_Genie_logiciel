@@ -5,7 +5,7 @@ import java.util.List;
 public class Media {
     private int id;
     private int userId;
-    private String type;     // "photo" ou "video"
+    private String type;
     private String url;
     private List<Integer> labelIds;
 
